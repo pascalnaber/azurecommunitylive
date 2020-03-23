@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gamingwebapp-ingresscf
+  namespace: ingressdemo
+  annotations:        
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: gaming.matrixproject.cf
+    http:
+      paths:
+      - backend:
+          serviceName: gamingwebapp-service
+          servicePort: 80
+  - host: matrixproject.cf
+    http:
+      paths:
+      - backend:
+          serviceName: gamingwebapp-service
+          servicePort: 80
+
+          

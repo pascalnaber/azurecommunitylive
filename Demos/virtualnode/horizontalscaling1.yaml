@@ -1,0 +1,64 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: leaderboard-api
+spec:
+    replicas: 1
+    template:
+        metadata:
+            name: leaderboard-api
+            labels:
+                app: backend
+        spec:
+            containers:
+            - name: leaderboard-api
+              image: k8s.gcr.io/hpa-example
+              ports:
+              - name: http-port
+                containerPort: 80
+              resources:
+                requests:
+                  cpu: "0.5"                  
+            affinity:
+              nodeAffinity:
+                preferredDuringSchedulingIgnoredDuringExecution:
+                - weight: 100
+                  preference:
+                    matchExpressions:
+                    - key: type
+                      operator: NotIn
+                      values:
+                      - virtual-kubelet
+            tolerations:
+            - key: virtual-kubelet.io/provider
+              operator: Exists
+            - key: azure.com/aci
+              effect: NoSchedule
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: leaderboard-api-svc
+spec:
+    type: LoadBalancer
+    selector:
+        app: backend
+    ports:
+    - port: 80
+---
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: leaderboard-api-autoscaler  
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: leaderboard-api
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      targetAverageUtilization: 50
